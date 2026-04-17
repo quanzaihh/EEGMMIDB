@@ -1,0 +1,35 @@
+2026-04-17 17:00:46,763 - INFO - Set random seed to: 4
+2026-04-17 17:00:47,060 - INFO - Temporal Kernel T = 1
+2026-04-17 17:00:47,060 - INFO - Total parameters: 534,218
+2026-04-17 17:00:47,060 - INFO - TemporalConv parameters: 66,304
+2026-04-17 17:01:36,004 - INFO - Set random seed to: 4
+2026-04-17 17:01:36,294 - INFO - Temporal Kernel T = 1
+2026-04-17 17:01:36,294 - INFO - Total parameters: 534,218
+2026-04-17 17:01:36,294 - INFO - TemporalConv parameters: 66,304
+2026-04-17 17:02:17,825 - INFO - Set random seed to: 4
+2026-04-17 17:02:17,851 - INFO - Temporal Kernel T = 1
+2026-04-17 17:02:17,851 - INFO - Total parameters: 534,218
+2026-04-17 17:02:17,851 - INFO - TemporalConv parameters: 66,304
+2026-04-17 17:02:22,612 - INFO - Training Samples per Class:
+2026-04-17 17:02:22,612 - INFO - Validate Samples per Class:
+2026-04-17 17:02:44,258 - INFO - Set random seed to: 4
+2026-04-17 17:02:44,282 - INFO - Temporal Kernel T = 1
+2026-04-17 17:02:44,282 - INFO - Total parameters: 534,218
+2026-04-17 17:02:44,282 - INFO - TemporalConv parameters: 66,304
+2026-04-17 17:02:48,492 - INFO - Training Samples per Class:
+2026-04-17 17:02:48,493 - INFO - Validate Samples per Class:
+2026-04-17 17:39:51,898 - INFO - Set random seed to: 4
+2026-04-17 17:39:51,903 - INFO - Temporal Kernel T = 1
+2026-04-17 17:39:51,904 - INFO - Total parameters: 534,218
+2026-04-17 17:39:51,904 - INFO - TemporalConv parameters: 66,304
+2026-04-17 17:39:56,796 - INFO - Training Samples per Class:
+2026-04-17 17:39:56,798 - INFO - Validate Samples per Class:
+2026-04-17 17:49:36,631 - INFO - Epoch: 0, Loss: 0.666102, Val Acc: 75.556 %
+2026-04-17 17:59:22,249 - INFO - Epoch: 1, Loss: 0.545991, Val Acc: 81.333 %
+2026-04-17 18:09:02,015 - INFO - Epoch: 2, Loss: 0.475003, Val Acc: 86.222 %
+2026-04-17 18:18:34,931 - INFO - Epoch: 3, Loss: 0.437709, Val Acc: 86.889 %
+2026-04-17 18:28:11,429 - INFO - Epoch: 4, Loss: 0.427413, Val Acc: 87.556 %
+2026-04-17 18:37:54,235 - INFO - Epoch: 5, Loss: 0.416004, Val Acc: 87.556 %
+2026-04-17 18:47:32,040 - INFO - Epoch: 6, Loss: 0.406696, Val Acc: 88.444 %
+2026-04-17 18:57:03,586 - INFO - Epoch: 7, Loss: 0.395916, Val Acc: 89.333 %
+2026-04-17 19:06:36,931 - INFO - Epoch: 8, Loss: 0.395273, Val Acc: 88.222 %

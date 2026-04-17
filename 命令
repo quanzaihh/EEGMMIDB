@@ -1,0 +1,14 @@
+1：随机种子为4,+CA，+SA 没有循环层 epoch:50. EEGDataset2DLeftRight
+2:随机种子为4,原始网络，没有循环层。EEGDataset2DLeftRight
+3:随机种子为4,原始网络+CA，没有循环层。EEGDataset2DLeftRight
+4:随机种子为4,原始网络+SA，没有循环层。EEGDataset2DLeftRight
+5:随机种子为4,原始网络+SA+CA，没有循环层。EEGDatasetLeftFeet
+6:随机种子为4,原始网络+cA，没有循环层。EEGDatasetLeftFeet
+7:随机种子为4,原始网络+sA，没有循环层。EEGDatasetLeftFeet
+8:随机种子为4,原始网络，没有循环层。EEGDatasetLeftFeet
+9:随机种子为4,原始网络，没有循环层。EEGDatasetRightFeet
+10：随机种子为4,原始网络+SA，没有循环层。EEGDatasetRightFeet
+11：随机种子为4,原始网络+cA，没有循环层。EEGDatasetRightFeet
+12：随机种子为4,原始网络+cA+SA，没有循环层。EEGDatasetRightFeet
+training_outputs-k1
+dfbsa_data_A_RF.mat A为T=1 B为T=3

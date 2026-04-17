@@ -1,0 +1,59 @@
+
+============================================================
+TemporalConv T值对比实验
+T值: [1, 2, 3, 5, 10]
+Epochs: 50, Spike TS: 160
+============================================================
+
+
+============================================================
+开始训练 T=1
+============================================================
+2026-04-17 17:02:44,258 - INFO - Set random seed to: 4
+2026-04-17 17:02:44,282 - INFO - Temporal Kernel T = 1
+2026-04-17 17:02:44,282 - INFO - Total parameters: 534,218
+2026-04-17 17:02:44,282 - INFO - TemporalConv parameters: 66,304
+2026-04-17 17:02:48,492 - INFO - Training Samples per Class:
+2026-04-17 17:02:48,493 - INFO - Validate Samples per Class:
+/Users/bytedance/workspace/yahui/eegmmidb/.venv/lib/python3.12/site-packages/torch/utils/data/dataloader.py:1118: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+Traceback (most recent call last):
+  File "/Users/bytedance/workspace/yahui/eegmmidb/run_T_experiments.py", line 456, in <module>
+    results = run_experiments()
+              ^^^^^^^^^^^^^^^^^
+  File "/Users/bytedance/workspace/yahui/eegmmidb/run_T_experiments.py", line 347, in run_experiments
+    model, metrics = train_network_with_T(
+                     ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bytedance/workspace/yahui/eegmmidb/run_T_experiments.py", line 257, in train_network_with_T
+    output = net(eeg_data)
+             ^^^^^^^^^^^^^
+  File "/Users/bytedance/workspace/yahui/eegmmidb/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bytedance/workspace/yahui/eegmmidb/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1790, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bytedance/workspace/yahui/eegmmidb/.venv/lib/python3.12/site-packages/torch/nn/parallel/data_parallel.py", line 176, in forward
+    return self.module(*inputs, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bytedance/workspace/yahui/eegmmidb/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bytedance/workspace/yahui/eegmmidb/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1790, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bytedance/workspace/yahui/eegmmidb/snn_T_experiment.py", line 391, in forward
+    output = self.snn(input_data, states, if_output)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bytedance/workspace/yahui/eegmmidb/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bytedance/workspace/yahui/eegmmidb/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1790, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bytedance/workspace/yahui/eegmmidb/snn_T_experiment.py", line 282, in forward
+    torch.full_like(torch.zeros(batch_size, 256, device=torch.device("cuda")), 1 - dropout_tc)).sample() / (
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bytedance/workspace/yahui/eegmmidb/.venv/lib/python3.12/site-packages/torch/cuda/__init__.py", line 471, in _lazy_init
+    raise AssertionError("Torch not compiled with CUDA enabled")
+AssertionError: Torch not compiled with CUDA enabled
