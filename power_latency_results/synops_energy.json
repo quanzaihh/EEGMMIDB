@@ -1,0 +1,118 @@
+{
+  "ckpt": "training_outputs_RF\\checkpoints\\checkpoint_best.pth",
+  "ckpt_meta": {
+    "epoch": 11,
+    "validate_subject_list": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
+  },
+  "samples_used": 225,
+  "spike_ts": 160,
+  "e_ac_pJ": 0.9,
+  "e_mac_pJ": 4.6,
+  "firing_rate_by_layer": {
+    "conv1": 0.4308162133487654,
+    "conv2": 0.12792395729993386,
+    "conv3": 0.06894737413194445,
+    "temp_conv1": 0.1350775824652778,
+    "fc1": 0.31953168402777776
+  },
+  "per_module": [
+    {
+      "module": "conv1",
+      "type": "SNN",
+      "dense_macs_per_ts": 41472,
+      "timesteps": 160,
+      "mean_firing_rate": 0.4308162133487654,
+      "synops_per_sample": 2858689.5999999996,
+      "energy_pJ_per_sample": 2572820.6399999997
+    },
+    {
+      "module": "conv2",
+      "type": "SNN",
+      "dense_macs_per_ts": 3096576,
+      "timesteps": 160,
+      "mean_firing_rate": 0.12792395729993386,
+      "synops_per_sample": 63380200.96,
+      "energy_pJ_per_sample": 57042180.864
+    },
+    {
+      "module": "conv3",
+      "type": "SNN",
+      "dense_macs_per_ts": 294912,
+      "timesteps": 160,
+      "mean_firing_rate": 0.06894737413194445,
+      "synops_per_sample": 3253345.2800000003,
+      "energy_pJ_per_sample": 2928010.7520000003
+    },
+    {
+      "module": "temp_conv1",
+      "type": "SNN",
+      "dense_macs_per_ts": 65536,
+      "timesteps": 160,
+      "mean_firing_rate": 0.1350775824652778,
+      "synops_per_sample": 1416391.1111111112,
+      "energy_pJ_per_sample": 1274752.0000000002
+    },
+    {
+      "module": "fc1",
+      "type": "SNN",
+      "dense_macs_per_ts": 65536,
+      "timesteps": 160,
+      "mean_firing_rate": 0.31953168402777776,
+      "synops_per_sample": 3350532.551111111,
+      "energy_pJ_per_sample": 3015479.296
+    },
+    {
+      "module": "cbam_conv1",
+      "type": "ANN",
+      "dense_macs_per_ts": 8080,
+      "timesteps": 160,
+      "mean_firing_rate": 1.0,
+      "synops_per_sample": 1292800,
+      "energy_pJ_per_sample": 5946880.0
+    },
+    {
+      "module": "cbam_conv2",
+      "type": "ANN",
+      "dense_macs_per_ts": 8212,
+      "timesteps": 160,
+      "mean_firing_rate": 1.0,
+      "synops_per_sample": 1313920,
+      "energy_pJ_per_sample": 6044031.999999999
+    },
+    {
+      "module": "cbam_conv3",
+      "type": "ANN",
+      "dense_macs_per_ts": 16482,
+      "timesteps": 160,
+      "mean_firing_rate": 1.0,
+      "synops_per_sample": 2637120,
+      "energy_pJ_per_sample": 12130751.999999998
+    },
+    {
+      "module": "fc2",
+      "type": "ANN",
+      "dense_macs_per_ts": 512,
+      "timesteps": 1,
+      "mean_firing_rate": 1.0,
+      "synops_per_sample": 512,
+      "energy_pJ_per_sample": 2355.2
+    }
+  ],
+  "snn_energy_pJ": 66833243.552,
+  "ann_energy_pJ": 24124019.2,
+  "cbam_energy_pJ": 24121664.0,
+  "non_cbam_energy_pJ": 66835598.752000004,
+  "total_energy_pJ_per_sample": 90957262.752,
+  "total_energy_uJ_per_sample": 90.957262752
+}

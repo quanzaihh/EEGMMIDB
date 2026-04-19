@@ -1,0 +1,52 @@
+python      : 3.9.23
+numpy       : 2.0.2
+slice_route : ../utils/eegmmidb_slice_norm/
+raw_route   : (scenario B skipped)
+subjects    : [7, 38]
+
+{
+  "scenario_A_pickle_to_tensor_us": {
+    "raw_getitem": {
+      "n": 2000,
+      "mean_us": 1.3764499999966429,
+      "std_us": 10.686054757515356,
+      "median_us": 0.40000000023354687,
+      "p95_us": 0.500000000069889,
+      "p99_us": 1.6120000000441228,
+      "min_us": 0.29999999995311555,
+      "max_us": 176.80000000019902
+    },
+    "getitem+ToTensor": {
+      "n": 2000,
+      "mean_us": 13.666150000010811,
+      "std_us": 5.732031687896973,
+      "median_us": 12.399999999912481,
+      "p95_us": 19.105000000241287,
+      "p99_us": 30.607000000100186,
+      "min_us": 9.29999999987885,
+      "max_us": 116.49999999985283
+    },
+    "getitem+Aug+ToTensor": {
+      "n": 2000,
+      "mean_us": 207.15160000000265,
+      "std_us": 158.7265950728879,
+      "median_us": 202.400000000047,
+      "p95_us": 476.5200000001356,
+      "p99_us": 753.7440000001893,
+      "min_us": 13.599999999946988,
+      "max_us": 1425.8000000002546
+    }
+  },
+  "scenario_B_edf_to_tensor_ms": null,
+  "config": {
+    "slice_route": "../utils/eegmmidb_slice_norm/",
+    "raw_route": "",
+    "subjects": [
+      7,
+      38
+    ],
+    "n_warmup": 100,
+    "n_measure": 2000,
+    "n_reps_B": 3
+  }
+}

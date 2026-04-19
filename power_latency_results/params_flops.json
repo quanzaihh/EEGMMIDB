@@ -1,0 +1,76 @@
+{
+  "config": {
+    "spike_ts": 160,
+    "param_list": [
+      0.1,
+      0.1,
+      0.1,
+      0.3,
+      0.01,
+      0.1,
+      0.01
+    ]
+  },
+  "params_by_module": {
+    "conv1": 9856,
+    "conv2": 84608,
+    "conv3": 295680,
+    "cbam_conv1": 526,
+    "cbam_conv2": 2062,
+    "cbam_conv3": 8206,
+    "avg_pool": 0,
+    "temp_conv1": 197888,
+    "fc1": 66304,
+    "fc2": 512,
+    "neuron_state": 160
+  },
+  "total_params": 665802,
+  "trainable_params": 665802,
+  "flops_by_module": {
+    "conv1": {
+      "macs_per_timestep": 41472,
+      "macs_per_sample": 6635520
+    },
+    "conv2": {
+      "macs_per_timestep": 3096576,
+      "macs_per_sample": 495452160
+    },
+    "conv3": {
+      "macs_per_timestep": 294912,
+      "macs_per_sample": 47185920
+    },
+    "cbam_conv1": {
+      "macs_per_timestep": 8080,
+      "macs_per_sample": 1292800
+    },
+    "cbam_conv2": {
+      "macs_per_timestep": 8212,
+      "macs_per_sample": 1313920
+    },
+    "cbam_conv3": {
+      "macs_per_timestep": 16482,
+      "macs_per_sample": 2637120
+    },
+    "avg_pool": {
+      "macs_per_timestep": 0,
+      "macs_per_sample": 0
+    },
+    "temp_conv1": {
+      "macs_per_timestep": 65536,
+      "macs_per_sample": 10485760
+    },
+    "fc1": {
+      "macs_per_timestep": 65536,
+      "macs_per_sample": 10485760
+    },
+    "fc2": {
+      "macs_per_timestep": 0,
+      "macs_per_sample": 512
+    }
+  },
+  "total_macs_per_sample": 575489472,
+  "cbam_params": 10794,
+  "cbam_macs_per_sample": 5243840,
+  "non_cbam_params": 655008,
+  "non_cbam_macs_per_sample": 570245632
+}
