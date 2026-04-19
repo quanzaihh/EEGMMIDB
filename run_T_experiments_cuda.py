@@ -186,7 +186,7 @@ def test_accuracy(network, test_loader, device):
 # ============================================================
 def train_network_with_T(temporal_kernel, dataset_kwargs, spike_ts, param_list,
                          validate_subject_list, batch_size, epoch, lr, logger, log_dir,
-                         seed=None, num_workers=4):
+                         seed=None, num_workers=4, lr_min=1e-6):
     device = torch.device("cuda")
 
     if seed is not None:
@@ -261,8 +261,10 @@ def train_network_with_T(temporal_kernel, dataset_kwargs, spike_ts, param_list,
         optimizer = optim.Adam(net.parameters(), lr=lr[2] if len(lr) > 2 else 1e-4)
 
     criterion = nn.CrossEntropyLoss()
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5,
-                                                    patience=3, min_lr=1e-8)
+    # 学习率退火：CosineAnnealingLR，每个 epoch 末 step() 一次，
+    # T_max = 总 epoch 数，eta_min 为最小学习率下限
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epoch, eta_min=lr_min)
+    logger.info('LR scheduler: CosineAnnealingLR(T_max=%d, eta_min=%g)', epoch, lr_min)
 
     # 训练循环
     epoch_accs, epoch_losses, epoch_class_accs = [], [], []
@@ -310,12 +312,16 @@ def train_network_with_T(temporal_kernel, dataset_kwargs, spike_ts, param_list,
         epoch_class_accs.append(class_acc.copy())
 
         epoch_time = time.time() - epoch_start
-        logger.info('Epoch: %d, Loss: %.6f, Val Acc: %.3f %%, Time: %.1fs, GPU mem: %.1f GB',
-                    e, avg_loss, acc * 100, epoch_time,
+        current_lrs = [pg['lr'] for pg in optimizer.param_groups]
+        logger.info('Epoch: %d, Loss: %.6f, Val Acc: %.3f %%, LR: %s, Time: %.1fs, GPU mem: %.1f GB',
+                    e, avg_loss, acc * 100,
+                    ', '.join(f'{x:.2e}' for x in current_lrs),
+                    epoch_time,
                     torch.cuda.max_memory_allocated() / 1024**3)
         torch.cuda.reset_peak_memory_stats()
 
-        scheduler.step(acc)
+        # CosineAnnealingLR 按 epoch 退火，不依赖验证指标
+        scheduler.step()
 
     # 保存训练曲线
     plt.figure(figsize=(10, 5))
@@ -347,7 +353,7 @@ def train_network_with_T(temporal_kernel, dataset_kwargs, spike_ts, param_list,
 # ============================================================
 # 主流程
 # ============================================================
-def run_experiments(t_values, epochs, batch_size, num_workers):
+def run_experiments(t_values, epochs, batch_size, num_workers, lr_min=1e-6):
     results = {}
 
     print("\n" + "=" * 60)
@@ -355,6 +361,7 @@ def run_experiments(t_values, epochs, batch_size, num_workers):
     print(f"T 值: {t_values}")
     print(f"Epochs: {epochs}, Batch size: {batch_size}, Spike TS: {SPIKE_TS}")
     print(f"Num workers: {num_workers}")
+    print(f"LR schedule: CosineAnnealingLR, eta_min = {lr_min:g}")
     print("=" * 60 + "\n")
 
     for T in t_values:
@@ -378,6 +385,7 @@ def run_experiments(t_values, epochs, batch_size, num_workers):
             log_dir=log_dir,
             seed=SEED,
             num_workers=num_workers,
+            lr_min=lr_min,
         )
         train_time = time.time() - start_time
 
@@ -398,8 +406,9 @@ def run_experiments(t_values, epochs, batch_size, num_workers):
         print(f"  训练时间: {train_time/60:.1f} 分钟")
         print(f"  TemporalConv 参数量: {metrics['tc_params']:,}")
 
-    # 汇总
-    results_file = RESULTS_DIR / "results_summary.json"
+    # 汇总（文件名含本进程跑的 T 列表，避免并行 launcher 下互相覆盖）
+    tag = "_".join(str(t) for t in t_values)
+    results_file = RESULTS_DIR / f"results_summary_T{tag}.json"
     with open(results_file, 'w') as f:
         json.dump(results, f, indent=2)
 
@@ -467,6 +476,8 @@ def parse_args():
                    help="批大小（默认 64；多卡可设更大）")
     p.add_argument("--num-workers", type=int, default=4,
                    help="DataLoader worker 数（默认 4）")
+    p.add_argument("--lr-min", type=float, default=1e-6,
+                   help="CosineAnnealingLR 的最小学习率 eta_min（默认 1e-6）")
     return p.parse_args()
 
 
@@ -476,4 +487,5 @@ if __name__ == "__main__":
     run_experiments(t_values=args.t_values,
                     epochs=args.epochs,
                     batch_size=args.batch_size,
-                    num_workers=args.num_workers)
+                    num_workers=args.num_workers,
+                    lr_min=args.lr_min)
