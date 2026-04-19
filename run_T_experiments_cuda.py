@@ -50,8 +50,18 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from snn_T_experiment import WrapCUBASpikingCNN
-from dataset import ToTensor, EEGDataset2DLeftRight
+from dataset import (ToTensor, EEGDataset2DLeftRight,
+                     EEGDatasetLeftFeet, EEGDatasetRightFeet)
 from utility import train_validate_split_subjects, samples_per_class
+
+
+# 任务名 -> Dataset 类（CLI 和目录名用 key，内部用 value）
+DATASET_REGISTRY = {
+    "LeftRight": EEGDataset2DLeftRight,
+    "LeftFeet":  EEGDatasetLeftFeet,
+    "RightFeet": EEGDatasetRightFeet,
+}
+DEFAULT_DATASETS = ["LeftRight", "LeftFeet", "RightFeet"]
 
 
 # ============================================================
@@ -118,12 +128,12 @@ def check_cuda_or_die():
     print(f"[INFO] PyTorch: {torch.__version__}, CUDA runtime: {torch.version.cuda}")
 
 
-def setup_logger(T):
-    """为每个 T 值设置独立日志"""
-    log_dir = RESULTS_DIR / f"T{T}"
+def setup_logger(T, dataset_name="LeftRight"):
+    """为每个 (数据集, T 值) 组合设置独立日志目录和 logger"""
+    log_dir = RESULTS_DIR / dataset_name / f"T{T}"
     log_dir.mkdir(parents=True, exist_ok=True)
 
-    logger = logging.getLogger(f'T_{T}')
+    logger = logging.getLogger(f'{dataset_name}_T_{T}')
     logger.setLevel(logging.INFO)
     logger.handlers.clear()
 
@@ -186,7 +196,8 @@ def test_accuracy(network, test_loader, device):
 # ============================================================
 def train_network_with_T(temporal_kernel, dataset_kwargs, spike_ts, param_list,
                          validate_subject_list, batch_size, epoch, lr, logger, log_dir,
-                         seed=None, num_workers=4, lr_min=1e-6):
+                         seed=None, num_workers=4, lr_min=1e-6,
+                         dataset_cls=EEGDataset2DLeftRight):
     device = torch.device("cuda")
 
     if seed is not None:
@@ -213,14 +224,15 @@ def train_network_with_T(temporal_kernel, dataset_kwargs, spike_ts, param_list,
     logger.info(f'Trainable parameters: {trainable_params:,}')
     logger.info(f'TemporalConv parameters: {tc_params:,}')
 
-    # 数据集
+    # 数据集（通过 dataset_cls 参数化，支持 LeftRight / LeftFeet / RightFeet）
     train_ds_kwargs = dataset_kwargs.copy()
     train_ds_kwargs.setdefault("transform", ToTensor())
-    train_ds = EEGDataset2DLeftRight(**train_ds_kwargs)
+    train_ds = dataset_cls(**train_ds_kwargs)
 
     val_ds_kwargs = dataset_kwargs.copy()
     val_ds_kwargs.setdefault("transform", ToTensor())
-    val_ds = EEGDataset2DLeftRight(**val_ds_kwargs)
+    val_ds = dataset_cls(**val_ds_kwargs)
+    logger.info(f"Dataset class: {dataset_cls.__name__}")
 
     train_indices, val_indices = train_validate_split_subjects(train_ds, validate_subject_list)
 
@@ -353,79 +365,115 @@ def train_network_with_T(temporal_kernel, dataset_kwargs, spike_ts, param_list,
 # ============================================================
 # 主流程
 # ============================================================
-def run_experiments(t_values, epochs, batch_size, num_workers, lr_min=1e-6):
-    results = {}
+def run_experiments(t_values, epochs, batch_size, num_workers, lr_min=1e-6,
+                    datasets=None):
+    datasets = datasets or DEFAULT_DATASETS
+    all_results = {}   # {dataset_name: {T: {...}}}
 
     print("\n" + "=" * 60)
     print("TemporalConv T 值对比实验 (CUDA)")
+    print(f"Datasets: {datasets}")
     print(f"T 值: {t_values}")
     print(f"Epochs: {epochs}, Batch size: {batch_size}, Spike TS: {SPIKE_TS}")
     print(f"Num workers: {num_workers}")
     print(f"LR schedule: CosineAnnealingLR, eta_min = {lr_min:g}")
+    print(f"总训练次数: {len(datasets)} datasets × {len(t_values)} T values = "
+          f"{len(datasets) * len(t_values)} 次")
     print("=" * 60 + "\n")
 
-    for T in t_values:
-        print(f"\n{'='*60}")
-        print(f"开始训练 T={T}")
-        print("="*60)
+    for ds_name in datasets:
+        if ds_name not in DATASET_REGISTRY:
+            print(f"[WARN] 未知 dataset '{ds_name}', 已知: {list(DATASET_REGISTRY)}")
+            continue
+        ds_cls = DATASET_REGISTRY[ds_name]
+        all_results[ds_name] = {}
 
-        logger, log_dir = setup_logger(T)
+        print("\n" + "#" * 70)
+        print(f"# Dataset: {ds_name}  ({ds_cls.__name__})")
+        print("#" * 70)
 
-        start_time = time.time()
-        model, metrics = train_network_with_T(
-            temporal_kernel=T,
-            dataset_kwargs=ds_params,
-            spike_ts=SPIKE_TS,
-            param_list=PARAM_LIST,
-            validate_subject_list=val_list[0],
-            batch_size=batch_size,
-            epoch=epochs,
-            lr=[NEURON_LR, TS_LR, WT_LR],
-            logger=logger,
-            log_dir=log_dir,
-            seed=SEED,
-            num_workers=num_workers,
-            lr_min=lr_min,
-        )
-        train_time = time.time() - start_time
+        for T in t_values:
+            print(f"\n{'='*60}")
+            print(f"开始训练 [{ds_name}] T={T}")
+            print("="*60)
 
-        results[T] = {
-            'best_val_acc': metrics['best_acc'],
-            'best_epoch': metrics['best_epoch'],
-            'final_val_acc': metrics['epoch_accs'][-1],
-            'train_time_sec': train_time,
-            'train_time_min': train_time / 60,
-            'total_params': metrics['total_params'],
-            'tc_params': metrics['tc_params'],
-            'epoch_accs': metrics['epoch_accs'],
-            'epoch_losses': metrics['epoch_losses']
-        }
+            logger, log_dir = setup_logger(T, ds_name)
+            logger.info(f"Dataset: {ds_name} ({ds_cls.__name__})")
 
-        print(f"\nT={T} 完成:")
-        print(f"  最佳准确率: {metrics['best_acc']*100:.2f}% (Epoch {metrics['best_epoch']})")
-        print(f"  训练时间: {train_time/60:.1f} 分钟")
-        print(f"  TemporalConv 参数量: {metrics['tc_params']:,}")
+            start_time = time.time()
+            model, metrics = train_network_with_T(
+                temporal_kernel=T,
+                dataset_kwargs=ds_params,
+                spike_ts=SPIKE_TS,
+                param_list=PARAM_LIST,
+                validate_subject_list=val_list[0],
+                batch_size=batch_size,
+                epoch=epochs,
+                lr=[NEURON_LR, TS_LR, WT_LR],
+                logger=logger,
+                log_dir=log_dir,
+                seed=SEED,
+                num_workers=num_workers,
+                lr_min=lr_min,
+                dataset_cls=ds_cls,
+            )
+            train_time = time.time() - start_time
 
-    # 汇总（文件名含本进程跑的 T 列表，避免并行 launcher 下互相覆盖）
-    tag = "_".join(str(t) for t in t_values)
-    results_file = RESULTS_DIR / f"results_summary_T{tag}.json"
+            all_results[ds_name][T] = {
+                'best_val_acc': metrics['best_acc'],
+                'best_epoch': metrics['best_epoch'],
+                'final_val_acc': metrics['epoch_accs'][-1],
+                'train_time_sec': train_time,
+                'train_time_min': train_time / 60,
+                'total_params': metrics['total_params'],
+                'tc_params': metrics['tc_params'],
+                'epoch_accs': metrics['epoch_accs'],
+                'epoch_losses': metrics['epoch_losses'],
+            }
+
+            print(f"\n[{ds_name}] T={T} 完成:")
+            print(f"  最佳准确率: {metrics['best_acc']*100:.2f}% (Epoch {metrics['best_epoch']})")
+            print(f"  训练时间: {train_time/60:.1f} 分钟")
+            print(f"  TemporalConv 参数量: {metrics['tc_params']:,}")
+
+        # 每个数据集各自输出一份 summary + 一张对比图
+        ds_tag = "_".join(str(t) for t in t_values)
+        ds_summary = RESULTS_DIR / ds_name / f"results_summary_T{ds_tag}.json"
+        ds_summary.parent.mkdir(parents=True, exist_ok=True)
+        with open(ds_summary, 'w') as f:
+            json.dump(all_results[ds_name], f, indent=2)
+        plot_comparison(all_results[ds_name], dataset_name=ds_name)
+
+    # 跨数据集总 summary，文件名带 datasets 和 T 列表，避免并行 launcher 覆盖
+    ds_key = "_".join(datasets)
+    t_key = "_".join(str(t) for t in t_values)
+    results_file = RESULTS_DIR / f"results_summary_{ds_key}_T{t_key}.json"
     with open(results_file, 'w') as f:
-        json.dump(results, f, indent=2)
+        json.dump(all_results, f, indent=2)
 
-    print("\n" + "=" * 70)
-    print("实验结果汇总")
-    print("=" * 70)
-    print(f"{'T':<5} {'Best Acc':<12} {'Best Epoch':<12} {'Train Time':<12} {'TC Params':<12}")
-    print("-" * 70)
-    for T, r in results.items():
-        print(f"{T:<5} {r['best_val_acc']*100:.2f}%{'':>5} {r['best_epoch']:<12} {r['train_time_min']:.1f} min{'':>4} {r['tc_params']:,}")
+    # 打印跨数据集汇总表
+    print("\n" + "=" * 78)
+    print("跨数据集 × T 值 实验结果汇总")
+    print("=" * 78)
+    header = f"{'Dataset':<12} {'T':<4} " \
+             f"{'Best Acc':<11} {'Best Ep':<8} {'Train(min)':<11} {'TC Params':<12}"
+    print(header)
+    print("-" * 78)
+    for ds_name, res in all_results.items():
+        for T, r in res.items():
+            print(f"{ds_name:<12} {T:<4} "
+                  f"{r['best_val_acc']*100:>6.2f}%    "
+                  f"{r['best_epoch']:<8} {r['train_time_min']:>7.1f}     "
+                  f"{r['tc_params']:,}")
 
-    plot_comparison(results)
     print(f"\n结果已保存到: {RESULTS_DIR}")
-    return results
+    return all_results
 
 
-def plot_comparison(results):
+def plot_comparison(results, dataset_name="LeftRight"):
+    out_dir = RESULTS_DIR / dataset_name
+    out_dir.mkdir(parents=True, exist_ok=True)
+
     T_values = list(results.keys())
     best_accs = [results[T]['best_val_acc'] * 100 for T in T_values]
     train_times = [results[T]['train_time_min'] for T in T_values]
@@ -434,24 +482,24 @@ def plot_comparison(results):
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     axes[0].bar([str(t) for t in T_values], best_accs, color='steelblue')
     axes[0].set_xlabel('Temporal Kernel (T)'); axes[0].set_ylabel('Best Validation Accuracy (%)')
-    axes[0].set_title('Accuracy vs T'); axes[0].grid(axis='y', alpha=0.3)
+    axes[0].set_title(f'[{dataset_name}] Accuracy vs T'); axes[0].grid(axis='y', alpha=0.3)
     for i, v in enumerate(best_accs):
         axes[0].text(i, v + 0.5, f'{v:.1f}%', ha='center')
 
     axes[1].bar([str(t) for t in T_values], train_times, color='coral')
     axes[1].set_xlabel('Temporal Kernel (T)'); axes[1].set_ylabel('Training Time (min)')
-    axes[1].set_title('Training Time vs T'); axes[1].grid(axis='y', alpha=0.3)
+    axes[1].set_title(f'[{dataset_name}] Training Time vs T'); axes[1].grid(axis='y', alpha=0.3)
     for i, v in enumerate(train_times):
         axes[1].text(i, v + 0.5, f'{v:.1f}', ha='center')
 
     axes[2].bar([str(t) for t in T_values], tc_params, color='green')
     axes[2].set_xlabel('Temporal Kernel (T)'); axes[2].set_ylabel('TemporalConv Parameters')
-    axes[2].set_title('Parameters vs T'); axes[2].grid(axis='y', alpha=0.3)
+    axes[2].set_title(f'[{dataset_name}] Parameters vs T'); axes[2].grid(axis='y', alpha=0.3)
     for i, v in enumerate(tc_params):
         axes[2].text(i, v, f'{v//1000}K', ha='center', fontsize=9)
 
     plt.tight_layout()
-    plt.savefig(RESULTS_DIR / "comparison_plot.png", dpi=150)
+    plt.savefig(out_dir / "comparison_plot.png", dpi=150)
     plt.close()
 
     plt.figure(figsize=(10, 6))
@@ -460,9 +508,9 @@ def plot_comparison(results):
         accs = [a * 100 for a in results[T]['epoch_accs']]
         plt.plot(epochs, accs, marker='o', markersize=3, label=f'T={T}')
     plt.xlabel('Epoch'); plt.ylabel('Validation Accuracy (%)')
-    plt.title('Validation Accuracy Curves for Different T Values')
+    plt.title(f'[{dataset_name}] Validation Accuracy Curves for Different T Values')
     plt.legend(); plt.grid(True, alpha=0.3)
-    plt.savefig(RESULTS_DIR / "accuracy_curves_comparison.png", dpi=150)
+    plt.savefig(out_dir / "accuracy_curves_comparison.png", dpi=150)
     plt.close()
 
 
@@ -478,6 +526,11 @@ def parse_args():
                    help="DataLoader worker 数（默认 4）")
     p.add_argument("--lr-min", type=float, default=1e-6,
                    help="CosineAnnealingLR 的最小学习率 eta_min（默认 1e-6）")
+    p.add_argument("--datasets", nargs="+", default=DEFAULT_DATASETS,
+                   choices=list(DATASET_REGISTRY.keys()),
+                   help=f"要训练的任务数据集（默认三个都跑: {DEFAULT_DATASETS}）。"
+                        f"可选: {list(DATASET_REGISTRY.keys())}。"
+                        f"示例: --datasets LeftRight  或  --datasets LeftRight RightFeet")
     return p.parse_args()
 
 
@@ -488,4 +541,5 @@ if __name__ == "__main__":
                     epochs=args.epochs,
                     batch_size=args.batch_size,
                     num_workers=args.num_workers,
-                    lr_min=args.lr_min)
+                    lr_min=args.lr_min,
+                    datasets=args.datasets)
