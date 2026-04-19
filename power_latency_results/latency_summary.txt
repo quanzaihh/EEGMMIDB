@@ -1,0 +1,75 @@
+torch              : 2.8.0+cu126
+cuda available     : True
+cuda device        : NVIDIA GeForce RTX 4060 Ti
+cuda capability    : (8, 9)
+cudnn version      : 91002
+
+{
+  "env": "torch              : 2.8.0+cu126\ncuda available     : True\ncuda device        : NVIDIA GeForce RTX 4060 Ti\ncuda capability    : (8, 9)\ncudnn version      : 91002",
+  "total_params": 665802,
+  "end_to_end_batch1": {
+    "n": 500,
+    "mean_ms": 482.31747879999955,
+    "std_ms": 83.89332110901923,
+    "median_ms": 524.749650000004,
+    "p95_ms": 533.1435549999889,
+    "p99_ms": 536.5060099999846,
+    "min_ms": 274.6019000000217,
+    "max_ms": 550.7135999999946
+  },
+  "throughput_batch64": {
+    "batch_size": 64,
+    "iters": 100,
+    "total_samples": 6400,
+    "total_time_s": 40.59905399999997,
+    "samples_per_s": 157.6391410499369,
+    "ms_per_batch": 405.99053999999967,
+    "ms_per_sample": 6.343602187499995
+  },
+  "per_module_ms_per_sample": {
+    "conv1": 0.0,
+    "cbam_conv1": 0.0,
+    "conv2": 0.0,
+    "cbam_conv2": 0.0,
+    "avg_pool": 0.0,
+    "conv3": 0.0,
+    "cbam_conv3": 0.0,
+    "temp_conv1": 0.0,
+    "fc1": 0.0,
+    "fc2": 0.0
+  },
+  "per_module_percent": {
+    "conv1": 0.0,
+    "cbam_conv1": 0.0,
+    "conv2": 0.0,
+    "cbam_conv2": 0.0,
+    "avg_pool": 0.0,
+    "conv3": 0.0,
+    "cbam_conv3": 0.0,
+    "temp_conv1": 0.0,
+    "fc1": 0.0,
+    "fc2": 0.0
+  },
+  "module_total_ms_per_sample": 0.0,
+  "cbam_vs_non_cbam": {
+    "cbam_total_ms_per_sample": 0.0,
+    "non_cbam_total_ms_per_sample": 0.0,
+    "cbam_percent_of_tracked": 0.0
+  },
+  "config": {
+    "spike_ts": 160,
+    "warmup_iters": 50,
+    "measure_iters": 500,
+    "profiler_iters": 50,
+    "throughput_batch_size": 64,
+    "param_list": [
+      0.1,
+      0.1,
+      0.1,
+      0.3,
+      0.01,
+      0.1,
+      0.01
+    ]
+  }
+}
