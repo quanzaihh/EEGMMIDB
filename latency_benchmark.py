@@ -50,7 +50,7 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 SPIKE_TS = 160
 PARAM_LIST = [0.1, 0.1, 0.1, 0.3, 0.01, 0.1, 0.01]
-WARMUP_ITERS = 50
+WARMUP_ITERS = 200       # was 50; needed more warmup to stabilize p95/p99
 MEASURE_ITERS = 500
 PROFILER_ITERS = 50
 BATCH_SIZE_THROUGHPUT = 64
@@ -194,15 +194,26 @@ def measure_per_module(net, device):
     for mod, orig in patched:
         mod.forward = orig
 
+    # PyTorch 2.8 renamed FunctionEventAvg.cuda_time_total -> device_time_total.
+    # Try both; pick whichever is non-zero.
+    def _get_device_us(ev):
+        for attr in ("device_time_total", "cuda_time_total",
+                     "self_device_time_total", "self_cuda_time_total"):
+            if hasattr(ev, attr):
+                v = getattr(ev, attr)
+                if v:
+                    return float(v)
+        return 0.0
+
     agg = {}
     for ev in prof.key_averages():
         k = ev.key
         if not k.startswith("MOD::"):
             continue
         name = k[len("MOD::"):]
-        cuda_us = float(getattr(ev, "cuda_time_total", 0.0))
-        cpu_us = float(getattr(ev, "cpu_time_total", 0.0))
-        count = int(getattr(ev, "count", 0))
+        cuda_us = _get_device_us(ev)
+        cpu_us = float(getattr(ev, "cpu_time_total", 0.0) or 0.0)
+        count = int(getattr(ev, "count", 0) or 0)
         agg[name] = {
             "cuda_time_us_total": cuda_us,
             "cpu_time_us_total": cpu_us,
