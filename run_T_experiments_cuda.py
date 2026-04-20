@@ -224,6 +224,14 @@ def train_network_with_T(temporal_kernel, dataset_kwargs, spike_ts, param_list,
     logger.info(f'Trainable parameters: {trainable_params:,}')
     logger.info(f'TemporalConv parameters: {tc_params:,}')
 
+    # 最后一层 fc 权重非负约束：训练开始前先把权重投影到 [0, +inf)，
+    # 每次 optimizer.step() 后再 clamp 一次，实现投影梯度下降。
+    final_fc = base_net.snn.fc2
+    with torch.no_grad():
+        final_fc.weight.data.clamp_(min=0.0)
+    logger.info('Final FC (snn.fc2) weight constrained to non-negative, shape=%s',
+                tuple(final_fc.weight.shape))
+
     # 数据集（通过 dataset_cls 参数化，支持 LeftRight / LeftFeet / RightFeet）
     train_ds_kwargs = dataset_kwargs.copy()
     train_ds_kwargs.setdefault("transform", ToTensor())
@@ -298,6 +306,10 @@ def train_network_with_T(temporal_kernel, dataset_kwargs, spike_ts, param_list,
             loss.backward()
             optimizer.step()
 
+            # 投影梯度下降：把最后一层 fc 的权重投影回非负锥
+            with torch.no_grad():
+                final_fc.weight.data.clamp_(min=0.0)
+
             running_loss += loss.item()
             iters += 1
 
@@ -325,11 +337,20 @@ def train_network_with_T(temporal_kernel, dataset_kwargs, spike_ts, param_list,
 
         epoch_time = time.time() - epoch_start
         current_lrs = [pg['lr'] for pg in optimizer.param_groups]
-        logger.info('Epoch: %d, Loss: %.6f, Val Acc: %.3f %%, LR: %s, Time: %.1fs, GPU mem: %.1f GB',
+        # 监控最后一层 fc 权重的 min/max，确认非负约束始终成立
+        with torch.no_grad():
+            fc_w = final_fc.weight.data
+            fc_min = float(fc_w.min().item())
+            fc_max = float(fc_w.max().item())
+            fc_neg = int((fc_w < 0).sum().item())
+        logger.info('Epoch: %d, Loss: %.6f, Val Acc: %.3f %%, LR: %s, Time: %.1fs, '
+                    'GPU mem: %.1f GB, fc2.weight min/max: %.4e/%.4e, neg#: %d',
                     e, avg_loss, acc * 100,
                     ', '.join(f'{x:.2e}' for x in current_lrs),
                     epoch_time,
-                    torch.cuda.max_memory_allocated() / 1024**3)
+                    torch.cuda.max_memory_allocated() / 1024**3,
+                    fc_min, fc_max, fc_neg)
+        assert fc_min >= 0.0, f'fc2.weight has negative entry: {fc_min}'
         torch.cuda.reset_peak_memory_stats()
 
         # CosineAnnealingLR 按 epoch 退火，不依赖验证指标
